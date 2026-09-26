@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from typing import TypedDict
 from uuid import UUID
 
 from fastapi import status
@@ -9,12 +9,11 @@ from starlette.responses import JSONResponse, Response
 from app.models.base import UserRole
 
 
-@dataclass(frozen=True, slots=True)
-class AuthenticatedUser:
+class AuthenticatedUser(TypedDict):
     """Trusted request context produced by the edge authentication layer."""
 
     id: UUID
-    role: UserRole
+    role: str
 
 
 class RBACMiddleware(BaseHTTPMiddleware):
@@ -53,6 +52,5 @@ class RBACMiddleware(BaseHTTPMiddleware):
                 },
             )
 
-        request.state.user = AuthenticatedUser(id=user_id, role=role)
+        request.state.user = AuthenticatedUser(id=user_id, role=role.value)
         return await call_next(request)
-

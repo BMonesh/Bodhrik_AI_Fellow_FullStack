@@ -3,6 +3,7 @@ from collections.abc import AsyncIterator
 
 from fastapi import FastAPI
 
+from app.api.routes.bookings import router as bookings_router
 from app.api.routes.health import router as health_router
 from app.core.config import settings
 from app.core.middleware import RBACMiddleware
@@ -30,4 +31,4 @@ app = FastAPI(
 )
 app.add_middleware(RBACMiddleware)
 app.include_router(health_router)
-
+app.include_router(bookings_router)
