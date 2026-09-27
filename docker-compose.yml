@@ -7,6 +7,7 @@ services:
       APP_NAME: ${APP_NAME:-Service Booking API}
       APP_ENV: ${APP_ENV:-development}
       DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://service_booking:service_booking@postgres:5432/service_booking}
+      TEST_DATABASE_URL: ${TEST_DATABASE_URL:-postgresql+asyncpg://service_booking:service_booking@postgres:5432/service_booking_test}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
     ports:
       - "8000:8000"
@@ -16,7 +17,7 @@ services:
       redis:
         condition: service_healthy
     volumes:
-      - ./app:/app/app
+      - .:/app
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     restart: unless-stopped
     networks:
@@ -34,7 +35,7 @@ services:
       redis:
         condition: service_healthy
     volumes:
-      - ./app:/app/app
+      - .:/app
     command: arq app.worker.WorkerSettings
     restart: unless-stopped
     networks:
