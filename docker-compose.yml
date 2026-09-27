@@ -22,6 +22,24 @@ services:
     networks:
       - booking-network
 
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://service_booking:service_booking@postgres:5432/service_booking}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./app:/app/app
+    command: arq app.worker.WorkerSettings
+    restart: unless-stopped
+    networks:
+      - booking-network
+
   postgres:
     image: postgres:16-alpine
     environment:

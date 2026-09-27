@@ -5,21 +5,25 @@ from fastapi import FastAPI
 
 from app.api.routes.bookings import router as bookings_router
 from app.api.routes.health import router as health_router
+from app.api.routes.reviews import router as reviews_router
 from app.core.config import settings
 from app.core.middleware import RBACMiddleware
+from app.core.queue import close_arq_pool, initialize_arq_pool
 from app.db.redis import redis_client
 from app.db.session import engine
 from app.models.base import Base
 
 
 @asynccontextmanager
-async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # create_all keeps this assessment self-starting. Use Alembic migrations in production.
     async with engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)
 
+    app.state.arq_pool = await initialize_arq_pool()
     yield
 
+    await close_arq_pool(app.state.arq_pool)
     await redis_client.aclose()
     await engine.dispose()
 
@@ -32,3 +36,4 @@ app = FastAPI(
 app.add_middleware(RBACMiddleware)
 app.include_router(health_router)
 app.include_router(bookings_router)
+app.include_router(reviews_router)

@@ -2,6 +2,6 @@ fastapi==0.115.12
 uvicorn[standard]==0.34.2
 SQLAlchemy[asyncio]==2.0.41
 asyncpg==0.30.0
-redis[hiredis]==6.1.0
+redis[hiredis]==5.2.1
 pydantic-settings==2.9.1
-
+arq==0.26.3

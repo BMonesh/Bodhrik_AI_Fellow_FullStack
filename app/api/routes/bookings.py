@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-from typing import TypedDict, cast
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
@@ -7,42 +6,13 @@ from sqlalchemy import Select, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.rbac import ensure_booking_access, get_request_user
 from app.db.session import get_db_session
 from app.models.base import Booking, BookingStatus, UserRole
 from app.schemas.booking import BookingCreate, BookingResponse, BookingUpdate
 
 
 router = APIRouter(prefix="/bookings", tags=["bookings"])
-
-
-class RequestUser(TypedDict):
-    id: UUID
-    role: str
-
-
-def get_request_user(request: Request) -> RequestUser:
-    return cast(RequestUser, request.state.user)
-
-
-def ensure_booking_access(booking: Booking, user: RequestUser) -> None:
-    """Allow admins or the provider/customer participating in the booking."""
-
-    if user["role"] == UserRole.ADMIN.value:
-        return
-    if (
-        user["role"] == UserRole.PROVIDER.value
-        and booking.provider_id == user["id"]
-    ):
-        return
-    if (
-        user["role"] == UserRole.CUSTOMER.value
-        and booking.customer_id == user["id"]
-    ):
-        return
-    raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
-        detail="You do not have access to this booking",
-    )
 
 
 async def get_booking_or_404(
@@ -185,4 +155,3 @@ async def delete_booking(
         ) from exc
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
-
