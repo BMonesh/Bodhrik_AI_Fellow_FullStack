@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: service_booking_test
+          POSTGRES_USER: service_booking
+          POSTGRES_PASSWORD: service_booking
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U service_booking -d service_booking_test"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=10
+
+    env:
+      APP_ENV: test
+      DATABASE_URL: postgresql+asyncpg://service_booking:service_booking@localhost:5432/service_booking_test
+      TEST_DATABASE_URL: postgresql+asyncpg://service_booking:service_booking@localhost:5432/service_booking_test
+      REDIS_URL: redis://localhost:6379/1
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip && pip install -r requirements.txt
+
+      - name: Lint
+        run: ruff check app tests
+
+      - name: Test
+        run: pytest -q
+
